@@ -1,27 +1,49 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as properties from "java-properties";
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+	console.log('active!');
+	const i18nglob = "**/i18n.properties"; // TODO: make configurable
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "helloworld" is now active!');
+	const i18nFileProperties  = new properties.PropertiesFile();
+	const addFile = (uri: vscode.Uri) => { 
+		i18nFileProperties.addFile(uri.fsPath); 
+	};
+	const addFiles = async () => {
+		const uris = await vscode.workspace.findFiles(i18nglob);
+		i18nFileProperties.reset();
+		uris.forEach(addFile);
+		console.log(i18nFileProperties.getKeys().length);
+	};
+	addFiles();
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
+	// track changes to i18n files
+	const i18nFileWatcher = vscode.workspace.createFileSystemWatcher(i18nglob);
+	i18nFileWatcher.onDidChange(addFiles);
+	i18nFileWatcher.onDidCreate(addFiles);
+	i18nFileWatcher.onDidDelete(addFiles);
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World!');
-	});
+	const itemprovider = vscode.languages.registerCompletionItemProvider({
+		language: "xml",
+		pattern: "**/*.xml",
+		scheme: "file"
+	}, {
+		provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
+			let range = document.getWordRangeAtPosition(position);
+			let text = document.getText(range);
+			if(range && (text.startsWith("i18n") || text.startsWith("i18"))){
+					return i18nFileProperties.getKeys().map((key: string) => {
+						let item = new vscode.CompletionItem(`i18n>${key}`, vscode.CompletionItemKind.Field);
+						item.detail = i18nFileProperties.getLast(key);
+						return item;
+					});
+			}
+			return [];
+		}
+	}, "n", "8", "1");
 
-	context.subscriptions.push(disposable);
+	context.subscriptions.push(itemprovider);
+	context.subscriptions.push(i18nFileWatcher);
 }
 
-// this method is called when your extension is deactivated
 export function deactivate() {}
