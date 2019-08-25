@@ -1,34 +1,252 @@
 {
-	"button text": {
-		"prefix": "#XBUT",
-		"body": [
-			"#XBUT, ${1:length}: ${2:description} ",
-			"${3:key}=${4:text}"
-		],
-		"description": "Button Text"
-	},
-	"table title": {
-		"prefix": "#XTIT",
-		"body": [
-			"#XTIT, ${1:length}: ${2:description} ",
-			"${3:key}=${4:text}"
-		],
-		"description": "Table Title"
-	},
-	"general text": {
-		"prefix": "#XTXT",
-		"body": [
-			"#XTXT, ${1:length}: ${2:description} ",
-			"${3:key}=${4:text}"
-		],
-		"description": "General Text"
+    "accessibility": {
+        "prefix": "#XACT",
+        "description": "Accessibility",
+        "body": ["#XACT, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
     },
-    "Caption": {
-		"prefix": "#XCAP",
-		"body": [
-			"#XCAP, ${1:length}: ${2:description} ",
-			"${3:key}=${4:text}"
-		],
-		"description": "Caption"
-	}
+    "alternativetext": {
+        "prefix": "#XALT",
+        "description": "Alternative text",
+        "body": ["#XALT, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "breadcrumbstep": {
+        "prefix": "#XBCB",
+        "description": "Breadcrumb step",
+        "body": ["#XBCB, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "listitem": {
+        "prefix": "#XBLI",
+        "description": "Bullet list item text",
+        "body": ["#XBLI, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "button": {
+        "prefix": "#XBUT",
+        "description": "Button text",
+        "body": ["#XBUT, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "caption": {
+        "prefix": "#XCAP",
+        "description": "Caption",
+        "body": ["#XCAP, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "cell": {
+        "prefix": "#XCEL",
+        "description": "Cell",
+        "body": ["#XCEL, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "checkbox": {
+        "prefix": "#XCKL",
+        "description": "Checkbox",
+        "body": ["#XCKL, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "tableColumnHeading": {
+        "prefix": "#XCOL",
+        "description": "Column header",
+        "body": ["#XCOL, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "tabStrip": {
+        "prefix": "#XCRD",
+        "description": "Tabstrip",
+        "body": ["#XCRD, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "datanavigationtext": {
+        "prefix": "#XDAT",
+        "description": "Data navigation text",
+        "body": ["#XDAT, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "label": {
+        "prefix": "#XFLD",
+        "description": "Label",
+        "body": ["#XFLD, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "frame": {
+        "prefix": "#XFRM",
+        "description": "Frame",
+        "body": ["#XFRM, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "term": {
+        "prefix": "#XGLS",
+        "description": "Term",
+        "body": ["#XGLS, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "grouptitle": {
+        "prefix": "#XGRP",
+        "description": "Group title",
+        "body": ["#XGRP, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "heading": {
+        "prefix": "#XHED",
+        "description": "Heading",
+        "body": ["#XHED, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "legendtext": {
+        "prefix": "#XLGD",
+        "description": "Legend text ",
+        "body": ["#XLGD, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "hyperlink": {
+        "prefix": "#XLNK",
+        "description": "Hyperlink text",
+        "body": ["#XLNK, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "logentry": {
+        "prefix": "#XLOG",
+        "description": "Log entry",
+        "body": ["#XLOG, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "listbox": {
+        "prefix": "#XLST",
+        "description": "List box item",
+        "body": ["#XLST, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "menu": {
+        "prefix": "#XMEN",
+        "description": "Menu header",
+        "body": ["#XMEN, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "menuitem": {
+        "prefix": "#XMIT",
+        "description": "Menu item",
+        "body": ["#XMIT, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "messagetext": {
+        "prefix": "#XMSG",
+        "description": "Message text",
+        "body": ["#XMSG, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "radio": {
+        "prefix": "#XRBL",
+        "description": "Radio button",
+        "body": ["#XRBL, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "roadMapStep": {
+        "prefix": "#XRMP",
+        "description": "Roadmap step",
+        "body": ["#XRMP, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "tableRowHeading": {
+        "prefix": "#XROW",
+        "description": "Table row heading",
+        "body": ["#XROW, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "selectiontext": {
+        "prefix": "#XSEL",
+        "description": "Selection text",
+        "body": ["#XSEL, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "tab": {
+        "prefix": "#XTBS",
+        "description": "Tab strip text",
+        "body": ["#XTBS, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "tableTitle": {
+        "prefix": "#XTIT",
+        "description": "Table title",
+        "body": ["#XTIT, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "treeNode": {
+        "prefix": "#XTND",
+        "description": "Tree node text",
+        "body": ["#XTND, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "quickInfo": {
+        "prefix": "#XTOL",
+        "description": "Quick info text",
+        "body": ["#XTOL, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "generaltext": {
+        "prefix": "#XTXT",
+        "description": "General text",
+        "body": ["#XTXT, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "accessibilitylong": {
+        "prefix": "#YACT",
+        "description": "Accessibility (long) ",
+        "body": ["#YACT, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "list": {
+        "prefix": "#YBLI",
+        "description": "Bullet list item text ",
+        "body": ["#YBLI, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "definition": {
+        "prefix": "#YDEF",
+        "description": "Definition ",
+        "body": ["#YDEF, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "description": {
+        "prefix": "#YDES",
+        "description": "Description",
+        "body": ["#YDES, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "explanation": {
+        "prefix": "#YEXP",
+        "description": "Explanation ",
+        "body": ["#YEXP, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "faqa": {
+        "prefix": "#YFAA",
+        "description": "FAQ answer",
+        "body": ["#YFAA, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "faq": {
+        "prefix": "#YFAQ",
+        "description": "FAQ",
+        "body": ["#YFAQ, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "glossarydefinition": {
+        "prefix": "#YGLS",
+        "description": "Glossary definition",
+        "body": ["#YGLS, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "informationtextlong": {
+        "prefix": "#YINF",
+        "description": "Information",
+        "body": ["#YINF, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "instruction": {
+        "prefix": "#YINS",
+        "description": "Instruction ",
+        "body": ["#YINS, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "logEntrylong": {
+        "prefix": "#YLOG",
+        "description": "Log entry",
+        "body": ["#YLOG, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "errorMessage": {
+        "prefix": "#YMSE",
+        "description": "Error message",
+        "body": ["#YMSE, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "messagetextlong": {
+        "prefix": "#YMSG",
+        "description": "Message text (long)",
+        "body": ["#YMSG, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "informationMessage": {
+        "prefix": "#YMSI",
+        "description": "Information message long",
+        "body": ["#YMSI, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "warningMessage": {
+        "prefix": "#YMSW",
+        "description": "Warning message",
+        "body": ["#YMSW, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "technicaltextlong": {
+        "prefix": "#YTEC",
+        "description": "Technical text",
+        "body": ["#YTEC, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "ticker": {
+        "prefix": "#YTIC",
+        "description": "Ticker / Marquee",
+        "body": ["#YTIC, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    },
+    "generaltextlong": {
+        "prefix": "#YTXT",
+        "description": "General text long",
+        "body": ["#YTXT, ${1:length}: ${2:description} ", "${3:key}=${4:text}"]
+    }
 }
