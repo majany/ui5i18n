@@ -1,7 +1,7 @@
 {
-	"name": "helloworld",
-	"displayName": "HelloWorld",
-	"description": "my first extension",
+	"name": "ui5i18n",
+	"displayName": "ui5 i18n",
+	"description": "Provides auto completion in xml files for i18n properties defined in your project",
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.37.0"
@@ -14,10 +14,10 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
-		"commands": [
+		"snippets": [
 			{
-				"command": "extension.helloWorld",
-				"title": "Hello World"
+				"language": "properties",
+				"path": "./src/snippets.json"
 			}
 		]
 	},

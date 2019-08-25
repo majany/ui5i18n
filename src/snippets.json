@@ -1,0 +1,34 @@
+{
+	"button text": {
+		"prefix": "#XBUT",
+		"body": [
+			"#XBUT, ${1:length}: ${2:description} ",
+			"${3:key}=${4:text}"
+		],
+		"description": "Button Text"
+	},
+	"table title": {
+		"prefix": "#XTIT",
+		"body": [
+			"#XTIT, ${1:length}: ${2:description} ",
+			"${3:key}=${4:text}"
+		],
+		"description": "Table Title"
+	},
+	"general text": {
+		"prefix": "#XTXT",
+		"body": [
+			"#XTXT, ${1:length}: ${2:description} ",
+			"${3:key}=${4:text}"
+		],
+		"description": "General Text"
+    },
+    "Caption": {
+		"prefix": "#XCAP",
+		"body": [
+			"#XCAP, ${1:length}: ${2:description} ",
+			"${3:key}=${4:text}"
+		],
+		"description": "Caption"
+	}
+}

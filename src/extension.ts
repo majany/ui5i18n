@@ -2,22 +2,22 @@ import * as vscode from 'vscode';
 import * as properties from "java-properties";
 
 export async function activate(context: vscode.ExtensionContext) {
-	console.log('active!');
 	const i18nglob = "**/i18n.properties"; // TODO: make configurable
-
 	const i18nFileProperties  = new properties.PropertiesFile();
-	const addFile = (uri: vscode.Uri) => { 
+
+	function addFile(uri: vscode.Uri){ 
 		i18nFileProperties.addFile(uri.fsPath); 
-	};
-	const addFiles = async () => {
+	}
+
+	async function addFiles() {
 		const uris = await vscode.workspace.findFiles(i18nglob);
 		i18nFileProperties.reset();
 		uris.forEach(addFile);
 		console.log(i18nFileProperties.getKeys().length);
-	};
+	}
 	addFiles();
 
-	// track changes to i18n files
+	// track changes to i18n files (reread all)
 	const i18nFileWatcher = vscode.workspace.createFileSystemWatcher(i18nglob);
 	i18nFileWatcher.onDidChange(addFiles);
 	i18nFileWatcher.onDidCreate(addFiles);
@@ -40,7 +40,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 			return [];
 		}
-	}, "n", "8", "1");
+	}, "n", "8");
 
 	context.subscriptions.push(itemprovider);
 	context.subscriptions.push(i18nFileWatcher);
