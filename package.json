@@ -2,7 +2,7 @@
 	"name": "ui5i18n",
 	"displayName": "ui5 i18n",
 	"description": "Provides auto completion in xml files for i18n properties defined in your project",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"engines": {
 		"vscode": "^1.37.0"
 	},
@@ -21,6 +21,7 @@
 			}
 		]
 	},
+	"publisher": "majany",
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
 		"compile": "tsc -p ./",
@@ -38,6 +39,10 @@
 		"typescript": "^3.3.1",
 		"tslint": "^5.12.1",
 		"vscode-test": "^1.0.2"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/majany/ui5i18n.git"
 	},
 	"dependencies": {
 		"java-properties": "^1.0.2"
