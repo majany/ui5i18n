@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import * as properties from "java-properties";
 
 export async function activate(context: vscode.ExtensionContext) {
-	const i18nglob = "**/i18n.properties"; // TODO: make configurable
+	let config = vscode.workspace.getConfiguration("ui5i18n");
+	const i18nglob = config.get("i18nGlobPattern") as string; 
 	const i18nFileProperties  = new properties.PropertiesFile();
 
 	// const uris = await vscode.workspace.findFiles(i18nglob);
