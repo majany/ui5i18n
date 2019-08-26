@@ -9,9 +9,28 @@ export async function activate(context: vscode.ExtensionContext) {
 	const i18nglob = config.get("i18nGlobPattern") as string;
 	const i18nFileProperties = new i18nProps.I18NPropertiesFile();
 	const uris = await vscode.workspace.findFiles(i18nglob);
+	const collection = vscode.languages.createDiagnosticCollection('ui5i18n');
 
 	function addFile(uri: vscode.Uri) {
-		i18nFileProperties.addFile(uri.fsPath);
+
+		let error = i18nFileProperties.addFile(uri.fsPath);
+		if (error) {
+			console.log("failed parsing " + vscode.workspace.asRelativePath(uri.fsPath));
+
+			let match = error.message.match(/at line (\d+) col (\d+):/) as string[];
+			let line = +match[1] - 1;
+			let column = +match[2];
+
+			collection.set(uri, [{
+				code: '',
+				message: error.message,
+				range: new vscode.Range(new vscode.Position(line, column), new vscode.Position(line, column)),
+				severity: vscode.DiagnosticSeverity.Error,
+				source: 'ui5i18n'
+			}]);
+		} else {
+			updateDiagnostics(uri, collection);
+		}
 	}
 
 	async function addFiles() {
@@ -80,9 +99,51 @@ export async function activate(context: vscode.ExtensionContext) {
 		await vscode.commands.executeCommand("vscode.openFolder", i18nFileUri);
 	});
 
+	function updateDiagnostics(uri: vscode.Uri, collection: vscode.DiagnosticCollection): void {
+		if (uri && uris.some(uri => uri.fsPath === uri.fsPath)) {
+			//TODO: filter by file uri
+			let diagArray: vscode.Diagnostic[] = [];
+			i18nFileProperties.getKeys().forEach(sKey => {
+				let i18nKey = i18nFileProperties.get(sKey);
+
+				if (i18nKey.fileName !== uri.fsPath) {
+					return;
+				}
+
+				if(i18nKey.def){
+					if(i18nKey.def.length !== null && i18nKey.def.length <= i18nKey.text.length){
+						let defLine = i18nKey.line - 1;
+						diagArray.push({
+							code: '',
+							message: sKey + " length definition should be at least " + (i18nKey.text.length + 1),
+							range: new vscode.Range(new vscode.Position(defLine, 0), new vscode.Position(defLine, 9)),
+							severity: vscode.DiagnosticSeverity.Warning,
+							source: 'ui5i18n'
+						});
+					}
+				} else {
+					diagArray.push({
+
+						code: '',
+						message: sKey + " is missing type definition",
+						range: new vscode.Range(new vscode.Position(i18nKey.line, 0), new vscode.Position(i18nKey.line, sKey.length)),
+						severity: vscode.DiagnosticSeverity.Error,
+						source: 'ui5i18n'
+					});
+				}
+			});
+
+			collection.set(uri, diagArray);
+		} else {
+			collection.set(uri, []);
+		}
+	}
+
+
 	context.subscriptions.push(createi18nTextCommand);
 	context.subscriptions.push(itemprovider);
 	context.subscriptions.push(i18nFileWatcher);
+	// context.subscriptions.push(editorchangelistener);
 }
 
 function formatCompletionItemDocumentation(keyInfo: i18nProps.i18nValue): string {
@@ -91,15 +152,17 @@ function formatCompletionItemDocumentation(keyInfo: i18nProps.i18nValue): string
 		res += keyInfo.def.text.trim() + "\n";
 		let typeName = i18nTextTypes[keyInfo.def.type];
 		res += "type:\t" + typeName + " (" + keyInfo.def.type + ")" + "\n";
-		res += "length:\t" + keyInfo.text.length + " (max " + keyInfo.def.length + ")";
-		if (keyInfo.text.length >= keyInfo.def.length) {
-			res += " ⚠️\n";
-		} else {
-			res += "\n";
+		if (keyInfo.def.length) {
+			res += "length:\t" + keyInfo.text.length + " (max " + keyInfo.def.length + ")";
+			if (keyInfo.text.length >= keyInfo.def.length) {
+				res += " ⚠️\n";
+			} else {
+				res += "\n";
+			}
 		}
 		res += "file:\t\t" + vscode.workspace.asRelativePath(keyInfo.fileName) + ", line " + (keyInfo.line + 1) + "\n";
 	} else {
-		res += "Definition is missing! ⚠️\n";
+		res += "Definition is missing! ❌\n";
 		res += "file: " + vscode.workspace.asRelativePath(keyInfo.fileName) + ", line " + (keyInfo.line + 1) + "\n";
 	}
 
