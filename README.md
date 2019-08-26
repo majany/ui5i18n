@@ -6,3 +6,4 @@ Gives basic support for i18n.properties files in ui5 applications.
 
 1. Snippets for properties files for every text type supported in ui5 (e.g. XBUT, XTIT, ...)
 2. Auto Completion in XML files for i18n properties defined in your project. Type "i18n" to trigger it.
+3. Typing a new property name allows to directly jump to the i18n.properties file with the name in the clipboard.
