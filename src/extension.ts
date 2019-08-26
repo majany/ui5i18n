@@ -77,10 +77,41 @@ export async function activate(context: vscode.ExtensionContext) {
 		await vscode.commands.executeCommand("vscode.openFolder", i18nFileUri);
 	});
 
-	context.subscriptions.push(createi18nTextCommand);
+	const annotationDecoration: vscode.TextEditorDecorationType = vscode.window.createTextEditorDecorationType({
+		after: {
+			margin: '0 0 0 3em',
+			textDecoration: 'none'
+		},
+		rangeBehavior: vscode.DecorationRangeBehavior.ClosedOpen
+	});
 
+	let editorchangelistener = vscode.window.onDidChangeTextEditorSelection((e: vscode.TextEditorSelectionChangeEvent) => {
+		let activeEditor = vscode.window.activeTextEditor;
+		if(activeEditor && e.textEditor === activeEditor && activeEditor.document.languageId === "properties"){
+			activeEditor.setDecorations(annotationDecoration, []);
+			let activeLine = activeEditor.selection.active.line;
+			let decorOp: vscode.DecorationOptions = {
+				renderOptions: {
+					after: {
+						contentText: "my super number 2",
+						color: new vscode.ThemeColor("textLink.foreground")
+					}
+				},
+				range: activeEditor.document.validateRange(
+					new vscode.Range(activeLine, Number.MAX_SAFE_INTEGER, activeLine, Number.MAX_SAFE_INTEGER)
+				)
+			};
+			activeEditor.setDecorations(annotationDecoration, [
+				decorOp
+			]);
+		}
+	});
+
+
+	context.subscriptions.push(createi18nTextCommand);
 	context.subscriptions.push(itemprovider);
 	context.subscriptions.push(i18nFileWatcher);
+	context.subscriptions.push(editorchangelistener);
 }
 
 export function deactivate() {}
