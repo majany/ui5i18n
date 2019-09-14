@@ -1,26 +1,27 @@
 import * as vscode from 'vscode';
-import * as properties from "java-properties";
+// import * as properties from "java-properties";
+import * as i18nProps from "i18nparser";
+
+let i18nTextTypes = require("../src/i18nTextTypes");
 
 export async function activate(context: vscode.ExtensionContext) {
 	let config = vscode.workspace.getConfiguration("ui5i18n");
-	const i18nglob = config.get("i18nGlobPattern") as string; 
-	const i18nFileProperties  = new properties.PropertiesFile();
-
+	const i18nglob = config.get("i18nGlobPattern") as string;
+	const i18nFileProperties = new i18nProps.I18NPropertiesFile();
 	const uris = await vscode.workspace.findFiles(i18nglob);
 
-	function addFile(uri: vscode.Uri){ 
-		i18nFileProperties.addFile(uri.fsPath); 
+	function addFile(uri: vscode.Uri) {
+		i18nFileProperties.addFile(uri.fsPath);
 	}
 
 	async function addFiles() {
 		const uris = await vscode.workspace.findFiles(i18nglob);
-		i18nFileProperties.reset();
+		i18nFileProperties.clear();
 		uris.forEach(addFile);
 		console.log(i18nFileProperties.getKeys().length);
 	}
 	await addFiles();
-
-	// track changes to i18n files (reread all)
+	// track changes to i18n files (cleare and reread all)
 	const i18nFileWatcher = vscode.workspace.createFileSystemWatcher("**/i18n.properties"); // config value does not work
 	i18nFileWatcher.onDidChange(addFiles);
 	i18nFileWatcher.onDidCreate(addFiles);
@@ -37,50 +38,72 @@ export async function activate(context: vscode.ExtensionContext) {
 
 			// removes i18n> prefix from completion items when i18n> was already typed
 			let prefix = "i18n>";
-			if(range && text.startsWith("i18n>")){
+			if (range && text.startsWith("i18n>")) {
 				prefix = "";
 			}
-			
-			if(range && (text.startsWith("i18n>") || text.startsWith("i18n"))){
-					let textExists = false;
-					// show existing i18n properties
-					let i18nCompletionItems = i18nFileProperties.getKeys().map((key: string) => {
-						let item = new vscode.CompletionItem(prefix + key, vscode.CompletionItemKind.Field);
-						item.detail = i18nFileProperties.getLast(key);
-						// check if input text exists
-						textExists = textExists || (prefix === "" && key === text.slice(5));
-						return item;
-					});
 
-					// input text is not an existing i18n property --> show template completion item
-					if(prefix === "" && text.length > 7 && vscode.CompletionTriggerKind.Invoke === context.triggerKind && !textExists ){
-						let newPropertyName = text.slice(5);
-						let placeholder = new vscode.CompletionItem(newPropertyName , vscode.CompletionItemKind.Snippet);
-						placeholder.detail = "Create i18n property";
-						placeholder.documentation = "Opens the main i18n.properties file and copies the name into the clipboard";
-						placeholder.command = {
-							command: "ui5i18n.createI18nText",
-							arguments: [uris[0], newPropertyName],
-							title: ""
-						};
-						i18nCompletionItems.push(placeholder);
-					}
-					return i18nCompletionItems;
+			if (range && (text.startsWith("i18n>") || text.startsWith("i18n"))) {
+				let textExists = false;
+				// show existing i18n properties
+				let i18nCompletionItems = i18nFileProperties.getKeys().map((key: string) => {
+					let item = new vscode.CompletionItem(prefix + key, vscode.CompletionItemKind.Field);
+					let keyInfo = i18nFileProperties.get(key);
+					item.detail = keyInfo.text;
+					item.documentation = formatCompletionItemDocumentation(keyInfo);
+					// check if input text exists
+					textExists = textExists || (prefix === "" && key === text.slice(5));
+					return item;
+				});
+
+				// input text is not an existing i18n property --> show template completion item
+				if (prefix === "" && text.length > 7 && vscode.CompletionTriggerKind.Invoke === context.triggerKind && !textExists) {
+					let newPropertyName = text.slice(5);
+					let placeholder = new vscode.CompletionItem(newPropertyName, vscode.CompletionItemKind.Snippet);
+					placeholder.detail = "Create i18n property";
+					placeholder.documentation = "Opens the main i18n.properties file and copies the name into the clipboard";
+					placeholder.command = {
+						command: "ui5i18n.createI18nText",
+						arguments: [uris[0], newPropertyName],
+						title: ""
+					};
+					i18nCompletionItems.push(placeholder);
+				}
+				return i18nCompletionItems;
 			}
 			return [];
 		}
 	}, ">", "n");
-	
+
 	// for internal use in template completion item
-	let createi18nTextCommand = vscode.commands.registerCommand('ui5i18n.createI18nText', async (i18nFileUri : vscode.Uri, textKey: string) => {
+	let createi18nTextCommand = vscode.commands.registerCommand('ui5i18n.createI18nText', async (i18nFileUri: vscode.Uri, textKey: string) => {
 		vscode.env.clipboard.writeText(textKey);
 		await vscode.commands.executeCommand("vscode.openFolder", i18nFileUri);
 	});
 
 	context.subscriptions.push(createi18nTextCommand);
-
 	context.subscriptions.push(itemprovider);
 	context.subscriptions.push(i18nFileWatcher);
+}
+
+function formatCompletionItemDocumentation(keyInfo: i18nProps.i18nValue): string {
+	let res = "";
+	if (keyInfo.def) {
+		res += keyInfo.def.text.trim() + "\n";
+		let typeName = i18nTextTypes[keyInfo.def.type];
+		res += "type:\t" + typeName + " (" + keyInfo.def.type + ")" + "\n";
+		res += "length:\t" + keyInfo.text.length + " (max " + keyInfo.def.length + ")";
+		if (keyInfo.text.length >= keyInfo.def.length) {
+			res += " ⚠️\n";
+		} else {
+			res += "\n";
+		}
+		res += "file:\t\t" + vscode.workspace.asRelativePath(keyInfo.fileName) + ", line " + (keyInfo.line + 1) + "\n";
+	} else {
+		res += "Definition is missing! ⚠️\n";
+		res += "file: " + vscode.workspace.asRelativePath(keyInfo.fileName) + ", line " + (keyInfo.line + 1) + "\n";
+	}
+
+	return res;
 }
 
 export function deactivate() {}

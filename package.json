@@ -55,6 +55,6 @@
 		"url": "https://github.com/majany/ui5i18n.git"
 	},
 	"dependencies": {
-		"java-properties": "^1.0.2"
+		"i18nparser": "github:majany/i18nparser"
 	}
 }
