@@ -2,7 +2,58 @@ import * as vscode from 'vscode';
 // import * as properties from "java-properties";
 import * as i18nProps from "i18nparser";
 
-let i18nTextTypes = require("../src/i18nTextTypes");
+let i18nTextTypes : any = {
+    "YACT": "Accessibility (long) ",
+    "YBLI": "Bullet list item text ",
+    "YDEF": "Definition ",
+    "YDES": "Description",
+    "YEXP": "Explanation ",
+    "YFAA": "FAQ answer",
+    "YFAQ": "FAQ",
+    "YGLS": "Glossary definition",
+    "YINF": "Information",
+    "YINS": "Instruction ",
+    "YLOG": "Log entry",
+    "YMSE": "Error message",
+    "YMSG": "Message text (long)",
+    "YMSI": "Information message long",
+    "YMSW": "Warning message",
+    "YTEC": "Technical text",
+    "YTIC": "Ticker / Marquee",
+    "YTXT": "General text long",
+    "XACT": "Accessibility",
+    "XALT": "Alternative text",
+    "XBCB": "Breadcrumb step",
+    "XBLI": "Bullet list item text",
+    "XBUT": "Button text",
+    "XCAP": "Caption",
+    "XCEL": "Cell",
+    "XCKL": "Checkbox",
+    "XCOL": "Column header",
+    "XCRD": "Tabstrip",
+    "XDAT": "Data navigation text",
+    "XFLD": "Label",
+    "XFRM": "Frame",
+    "XGLS": "Term",
+    "XGRP": "Group title",
+    "XHED": "Heading",
+    "XLGD": "Legend text ",
+    "XLNK": "Hyperlink text",
+    "XLOG": "Log entry",
+    "XLST": "List box item",
+    "XMEN": "Menu header",
+    "XMIT": "Menu item",
+    "XMSG": "Message text",
+    "XRBL": "Radio button",
+    "XRMP": "Roadmap step",
+    "XROW": "Table row heading",
+    "XSEL": "Selection text",
+    "XTBS": "Tab strip text",
+    "XTIT": "Table title",
+    "XTND": "Tree node text",
+    "XTOL": "Quick info text",
+    "XTXT": "General text"
+};
 
 export async function activate(context: vscode.ExtensionContext) {
 	let config = vscode.workspace.getConfiguration("ui5i18n");
@@ -111,11 +162,12 @@ export async function activate(context: vscode.ExtensionContext) {
 				}
 
 				if(i18nKey.def){
-					if(i18nKey.def.length !== null && i18nKey.def.length <= i18nKey.text.length){
+					let recommendedLength = computeRecommendedLength(i18nKey.text);
+					if(i18nKey.def.length !== null && i18nKey.def.length < recommendedLength){
 						let defLine = i18nKey.line - 1;
 						diagArray.push({
 							code: '',
-							message: sKey + " length definition should be at least " + (i18nKey.text.length + 1),
+							message: sKey + " length definition should be at least " + recommendedLength,
 							range: new vscode.Range(new vscode.Position(defLine, 0), new vscode.Position(defLine, 9)),
 							severity: vscode.DiagnosticSeverity.Warning,
 							source: 'ui5i18n'
@@ -143,7 +195,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(createi18nTextCommand);
 	context.subscriptions.push(itemprovider);
 	context.subscriptions.push(i18nFileWatcher);
-	// context.subscriptions.push(editorchangelistener);
 }
 
 function formatCompletionItemDocumentation(keyInfo: i18nProps.i18nValue): string {
@@ -167,6 +218,51 @@ function formatCompletionItemDocumentation(keyInfo: i18nProps.i18nValue): string
 	}
 
 	return res;
+}
+
+
+function computeRecommendedLength(text: string) {
+	let tlength: number = 0;
+	let enlength = text.length;
+
+	// matrix for recommended length
+	if (enlength >= 1 && enlength <= 4) {
+		tlength = 10;
+	}
+	else if (enlength === 5) {
+		tlength = 14;
+	}
+	else if (enlength === 6) {
+		tlength = 16;
+	}
+	else if (enlength === 7) {
+		tlength = 18;
+	}
+	else if (enlength >= 8 && enlength <= 10) {
+		tlength = 20;
+	}
+	else if (enlength === 11) {
+		tlength = 22;
+	}
+	else if (enlength === 12) {
+		tlength = 24;
+	}
+	else if (enlength >= 13 && enlength <= 15) {
+		tlength = 26;
+	}
+	else if (enlength === 16) {
+		tlength = 28;
+	}
+	else if (enlength >= 17 && enlength <= 20) {
+		tlength = 32;
+	}
+	else if (enlength >= 21 && enlength <= 80) {
+		tlength = Math.round((enlength + enlength / 100 * 50));
+	}
+	else {
+		tlength = Math.round((enlength + enlength / 100 * 30));
+	}
+	return tlength;
 }
 
 export function deactivate() {}
