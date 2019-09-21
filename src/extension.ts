@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 // import * as properties from "java-properties";
 import * as i18nProps from "i18nparser";
-import { I18NCompletionItemProvider, I18NCompletionitemProviderDocumentSelector, triggerCharacters } from "./I18NCompletionProvider";
+import { I18NCompletionItemProvider } from "./I18NCompletionProvider";
 import { computeRecommendedLength } from "./RecLengthCalculator";
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -12,8 +12,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	const collection = vscode.languages.createDiagnosticCollection('ui5i18n');
 
 	let i18nCompletionItemProvider = new I18NCompletionItemProvider(i18nFileProperties, uris[0]);
-	const itemprovider = vscode.languages.registerCompletionItemProvider(I18NCompletionitemProviderDocumentSelector, i18nCompletionItemProvider, ...triggerCharacters);
-	context.subscriptions.push(itemprovider);
+	const itemProviderDisposable = vscode.languages.registerCompletionItemProvider(I18NCompletionItemProvider.DOCUMENT_SELECTOR, i18nCompletionItemProvider, ...I18NCompletionItemProvider.TRIGGER_CHARS);
+	context.subscriptions.push(itemProviderDisposable);
 
 	function addFile(uri: vscode.Uri) {
 		let error = i18nFileProperties.addFile(uri.fsPath);
@@ -46,9 +46,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// track changes to i18n files (cleare and reread all)
 	const i18nFileWatcher = vscode.workspace.createFileSystemWatcher("**/i18n.properties"); // config value does not work
-	i18nFileWatcher.onDidChange(addFiles);
-	i18nFileWatcher.onDidCreate(addFiles);
-	i18nFileWatcher.onDidDelete(addFiles);
+	i18nFileWatcher.onDidChange(uri => {
+		i18nFileProperties.removeFile(uri.fsPath);
+		addFile(uri);
+	});
+	i18nFileWatcher.onDidCreate(uri => {
+		i18nFileProperties.addFile(uri.fsPath);
+	});
+	i18nFileWatcher.onDidDelete(uri => {
+		i18nFileProperties.removeFile(uri.fsPath);
+	});
 
 	// for internal use in template completion item
 	let createi18nTextCommand = vscode.commands.registerCommand('ui5i18n.createI18nText', async (i18nFileUri: vscode.Uri, textKey: string) => {
@@ -68,9 +75,30 @@ export async function activate(context: vscode.ExtensionContext) {
 					return;
 				}
 
-				if(i18nKey.def){
+				if (i18nKey.duplicateOf) {
+					const original = i18nFileProperties.get(i18nKey.duplicateOf);
+					diagArray.push({
+						code: '',
+						message: i18nKey.duplicateOf + " is already defined",
+						range: new vscode.Range(new vscode.Position(i18nKey.line, 0), new vscode.Position(i18nKey.line, i18nKey.duplicateOf.length)),
+						severity: vscode.DiagnosticSeverity.Error,
+						source: 'ui5i18n',
+						relatedInformation: [
+							new vscode.DiagnosticRelatedInformation(new vscode.Location(
+								uri, new vscode.Range(
+									new vscode.Position(original.line, 0),
+									new vscode.Position(original.line, i18nKey.duplicateOf.length)
+								)
+							),
+								'first definition of ' + i18nKey.duplicateOf)
+						]
+					});
+					return;
+				}
+
+				if (i18nKey.def) {
 					let recommendedLength = computeRecommendedLength(i18nKey.text);
-					if(i18nKey.def.length !== null && i18nKey.def.length < recommendedLength){
+					if (i18nKey.def.length !== null && i18nKey.def.length < recommendedLength) {
 						let defLine = i18nKey.line - 1;
 						diagArray.push({
 							code: '',
@@ -100,4 +128,4 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(i18nFileWatcher);
 }
 
-export function deactivate() {}
+export function deactivate() { }
