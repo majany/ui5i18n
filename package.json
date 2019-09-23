@@ -2,7 +2,7 @@
 	"name": "ui5i18n",
 	"displayName": "ui5 i18n",
 	"description": "Provides auto completion in xml files for i18n properties defined in your project",
-	"version": "0.6.0",
+	"version": "0.9.0",
 	"engines": {
 		"vscode": "^1.37.0"
 	},
@@ -25,7 +25,7 @@
 			"properties": {
 				"ui5i18n.i18nGlobPattern": {
 					"type": "string",
-					"default": "webapp/**/i18n.properties",
+					"default": "{webapp,src}/**/i18n.properties",
 					"description": "Glob pattern for the i18n properties of your ui5 app"
 				}
 			}

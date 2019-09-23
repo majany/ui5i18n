@@ -109,14 +109,35 @@ export async function activate(context: vscode.ExtensionContext) {
 						});
 					}
 				} else {
-					diagArray.push({
-
-						code: '',
-						message: sKey + " is missing type definition",
-						range: new vscode.Range(new vscode.Position(i18nKey.line, 0), new vscode.Position(i18nKey.line, sKey.length)),
-						severity: vscode.DiagnosticSeverity.Error,
-						source: 'ui5i18n'
-					});
+					let missingDefDiag : vscode.Diagnostic;
+					
+					if(i18nKey.defError){
+						let erroneousDefLine = i18nKey.line - 1 ;
+						let errorRange = new vscode.Range(new vscode.Position(erroneousDefLine, i18nKey.defError.offset), new vscode.Position(erroneousDefLine, i18nKey.defError.offset + 1));
+						missingDefDiag = {
+							code: '',
+							message: sKey + " has faulty type definition",
+							range: errorRange,
+							severity: vscode.DiagnosticSeverity.Error,
+							source: 'ui5i18n',
+							relatedInformation: [
+								new vscode.DiagnosticRelatedInformation(new vscode.Location(
+									uri, errorRange
+								),
+									i18nKey.defError.message)
+							]
+						};
+					} else {
+						missingDefDiag = {
+							code: '',
+							message: sKey + " is missing type definition",
+							range: new vscode.Range(new vscode.Position(i18nKey.line, 0), new vscode.Position(i18nKey.line, sKey.length)),
+							severity: vscode.DiagnosticSeverity.Error,
+							source: 'ui5i18n'
+						};
+					}
+					
+					diagArray.push(missingDefDiag);
 				}
 			});
 

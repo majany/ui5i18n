@@ -16,15 +16,18 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
      * Characters to be used in the registration of the CompletionItemProvider
      */
     static TRIGGER_CHARS: string[] = [">", "n"];
-
     /**
      * The DocumentSelector to be used in the registration of the CompletionItemProvider
      */
-    static DOCUMENT_SELECTOR: vscode.DocumentSelector = {
+    static DOCUMENT_SELECTOR: vscode.DocumentSelector = [{
         language: "xml",
         pattern: "**/*.xml",
         scheme: "file"
-    };
+    }, {
+        language: "javascript",
+        pattern: "**/*.js",
+        scheme: "file"
+    }];
 
     private i18nProperties: I18NPropertiesFile;
     private mainI18nFileUri: vscode.Uri;
@@ -41,6 +44,7 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
         const wordRange = document.getWordRangeAtPosition(position, /[A-Za-z0-9>_]+/);
         const wordText = document.getText(wordRange);
         let i18nCompletionItems: CompletionItem[] = [];
+        const isJavascriptFile = document.languageId === "javascript";
 
         // removes i18n> prefix from completion items when i18n> was already typed
         let completionItemPrefix = this.TRIGGER_PREFIX;
@@ -63,6 +67,9 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
                 completionItem.documentation = this.formatCompletionItemDocumentation(keyInfo);
                 // check if input text exists
                 textExists = textExists || (completionItemPrefix === "" && key === wordText.slice(5));
+                if(isJavascriptFile){
+                    completionItem.insertText = key;
+                }
                 i18nCompletionItems.push(completionItem);
             });
 
