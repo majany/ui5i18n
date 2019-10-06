@@ -66,7 +66,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	function updateDiagnostics(uri: vscode.Uri, collection: vscode.DiagnosticCollection): void {
 		if (uri && uris.some(uri => uri.fsPath === uri.fsPath)) {
-			//TODO: filter by file uri
+
 			let diagArray: vscode.Diagnostic[] = [];
 			i18nFileProperties.getKeys().forEach(sKey => {
 				let i18nKey = i18nFileProperties.get(sKey);
@@ -109,10 +109,10 @@ export async function activate(context: vscode.ExtensionContext) {
 						});
 					}
 				} else {
-					let missingDefDiag : vscode.Diagnostic;
-					
-					if(i18nKey.defError){
-						let erroneousDefLine = i18nKey.line - 1 ;
+					let missingDefDiag: vscode.Diagnostic;
+
+					if (i18nKey.defError) {
+						let erroneousDefLine = i18nKey.line - 1;
 						let errorRange = new vscode.Range(new vscode.Position(erroneousDefLine, i18nKey.defError.offset), new vscode.Position(erroneousDefLine, i18nKey.defError.offset + 1));
 						missingDefDiag = {
 							code: '',
@@ -136,8 +136,22 @@ export async function activate(context: vscode.ExtensionContext) {
 							source: 'ui5i18n'
 						};
 					}
-					
+
 					diagArray.push(missingDefDiag);
+				}
+			});
+
+			//get error lines
+			let errorLines = i18nFileProperties.getErrorLines(uri.fsPath) || [];
+			errorLines.forEach(line => {
+				if (line && line.error) {
+					diagArray.push({
+						code: '',
+						source: 'ui5i18n',
+						severity: vscode.DiagnosticSeverity.Error,
+						message: line.error.message,
+						range: new vscode.Range(new vscode.Position(line.line as number, line.error.offset), new vscode.Position(line.line as number, line.error.offset)),
+					} as vscode.Diagnostic);
 				}
 			});
 
