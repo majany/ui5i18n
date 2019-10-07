@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import * as i18nProps from "i18nparser";
 import { I18NCompletionItemProvider } from "./I18NCompletionProvider";
 import { computeRecommendedLength } from "./RecLengthCalculator";
+import { I18NHoverProvider } from './I18NHoverProvider';
 
 export async function activate(context: vscode.ExtensionContext) {
 	let config = vscode.workspace.getConfiguration("ui5i18n");
@@ -11,9 +12,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	const uris = await vscode.workspace.findFiles(i18nglob);
 	const collection = vscode.languages.createDiagnosticCollection('ui5i18n');
 
-	let i18nCompletionItemProvider = new I18NCompletionItemProvider(i18nFileProperties, uris[0]);
+	const i18nCompletionItemProvider = new I18NCompletionItemProvider(i18nFileProperties, uris[0]);
 	const itemProviderDisposable = vscode.languages.registerCompletionItemProvider(I18NCompletionItemProvider.DOCUMENT_SELECTOR, i18nCompletionItemProvider, ...I18NCompletionItemProvider.TRIGGER_CHARS);
 	context.subscriptions.push(itemProviderDisposable);
+
+	const i18nHoverProvider = new I18NHoverProvider(i18nFileProperties);
+	const hoverProviderDisposable = vscode.languages.registerHoverProvider(I18NHoverProvider.DOCUMENT_SELECTOR, i18nHoverProvider);
+	context.subscriptions.push(hoverProviderDisposable);
 
 	function addFile(uri: vscode.Uri) {
 		let error = i18nFileProperties.addFile(uri.fsPath);

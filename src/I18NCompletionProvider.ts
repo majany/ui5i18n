@@ -41,53 +41,67 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
     }
 
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
-        const wordRange = document.getWordRangeAtPosition(position, /[A-Za-z0-9>_]+/);
+        const wordRange = document.getWordRangeAtPosition(position, /[A-Za-z0-9>_|.]+/);
+        const wordRangeWithColon = document.getWordRangeAtPosition(position, /[A-Za-z0-9>_|."']+/);
         const wordText = document.getText(wordRange);
+        const wordTextWithColon = document.getText(wordRangeWithColon);
+        const isInColons = (wordTextWithColon.startsWith("\"") && wordTextWithColon.endsWith("\"")) || wordTextWithColon.startsWith("'") && wordTextWithColon.endsWith("'");
         let i18nCompletionItems: CompletionItem[] = [];
         const isJavascriptFile = document.languageId === "javascript";
 
-        // removes i18n> prefix from completion items when i18n> was already typed
-        let completionItemPrefix = this.TRIGGER_PREFIX;
-        if (wordRange && wordText.startsWith(this.TRIGGER_PREFIX)) {
-            completionItemPrefix = "";
-        }
-
-        if (wordRange && (wordText.startsWith(this.TRIGGER_PREFIX) || wordText.startsWith(this.TRIGGER_PREFIX_NO_CHEV))) {
-            let textExists = false;
+        const wasInvoked = context.triggerKind === vscode.CompletionTriggerKind.Invoke;
+        if (wordRange && (wordText.startsWith(this.TRIGGER_PREFIX) || wordText.startsWith(this.TRIGGER_PREFIX_NO_CHEV) || (wasInvoked && isInColons && isJavascriptFile))) {
             // show existing i18n properties
-           
-            this.i18nProperties.getKeys().forEach((key: string) => {
-                let keyInfo = this.i18nProperties.get(key);
-                if(keyInfo.duplicateOf){
-                    // skip if it is duplicate
-                    return;
-                }
-                let completionItem = new CompletionItem(completionItemPrefix + key, vscode.CompletionItemKind.Field);
-                completionItem.detail = keyInfo.text;
-                completionItem.documentation = this.formatCompletionItemDocumentation(keyInfo);
-                // check if input text exists
-                textExists = textExists || (completionItemPrefix === "" && key === wordText.slice(5));
-                if(isJavascriptFile){
-                    completionItem.insertText = key;
-                }
-                i18nCompletionItems.push(completionItem);
-            });
-
-            // input text is not an existing i18n property --> show template completion item
-            if (completionItemPrefix === "" && wordText.length > 7 && vscode.CompletionTriggerKind.Invoke === context.triggerKind && !textExists) {
-                let newPropertyName = wordText.slice(5);
-                let placeholder = new CompletionItem(newPropertyName, vscode.CompletionItemKind.Snippet);
-                placeholder.detail = "Create i18n property";
-                placeholder.documentation = "Opens the main i18n.properties file and copies the name into the clipboard";
-                placeholder.command = {
-                    command: "ui5i18n.createI18nText",
-                    arguments: [this.mainI18nFileUri, newPropertyName],
-                    title: ""
-                };
-                i18nCompletionItems.push(placeholder);
-            }
+            i18nCompletionItems = this.getCompletionItems(wordText, wasInvoked, isJavascriptFile, isInColons);
         }
         return i18nCompletionItems;
+    }
+
+    private getCompletionItems(wordText: string, wasInvoked: boolean, isJavascriptFile: boolean, isInColons: boolean): CompletionItem[] {
+        const i18nCompletionItems: CompletionItem[] = [];
+        const withTriggerPrefix = wordText.startsWith(this.TRIGGER_PREFIX);
+        const withTriggerPrefixNoChev = wordText.startsWith(this.TRIGGER_PREFIX_NO_CHEV);
+        
+        this.i18nProperties.getKeys().forEach((key: string) => {
+            const keyInfo = this.i18nProperties.get(key);
+            if (keyInfo.duplicateOf) {
+                // skip if it is duplicate
+                return;
+            }
+
+            let completionItemLabel = (isInColons && !withTriggerPrefixNoChev || withTriggerPrefix) ? key : (this.TRIGGER_PREFIX + key);
+            const completionItem = new CompletionItem(completionItemLabel, vscode.CompletionItemKind.Field);
+            completionItem.detail = keyInfo.text;
+            completionItem.documentation = this.formatCompletionItemDocumentation(keyInfo);
+            // check if input text exists
+            
+            if (isJavascriptFile) {
+                completionItem.insertText = key;
+            }
+            i18nCompletionItems.push(completionItem);
+        });
+        
+        const wordTextWithoutPrefix = withTriggerPrefix ? wordText.slice(this.TRIGGER_PREFIX.length) : wordText;
+        const textExists = !!this.i18nProperties.get(wordTextWithoutPrefix);
+
+        // input text is not an existing i18n property --> show template completion item
+        if (!textExists && wasInvoked && wordTextWithoutPrefix.length > 2 && wordTextWithoutPrefix !== "i18n") {
+            const placeholder = this.createPlaceHolderCompletionItem(wordTextWithoutPrefix);
+            i18nCompletionItems.push(placeholder);
+        }
+        return i18nCompletionItems;
+    }
+
+    private createPlaceHolderCompletionItem(newPropertyName: string) : CompletionItem{
+        let placeholder = new CompletionItem(newPropertyName, vscode.CompletionItemKind.Snippet);
+        placeholder.detail = "Create i18n property";
+        placeholder.documentation = "Opens the main i18n.properties file and copies the name into the clipboard";
+        placeholder.command = {
+            command: "ui5i18n.createI18nText",
+            arguments: [this.mainI18nFileUri, newPropertyName],
+            title: ""
+        };
+        return placeholder;
     }
 
 
@@ -99,7 +113,7 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
             res += "type:\t" + typeName + " (" + keyInfo.def.type + ")" + "\n";
             if (keyInfo.def.length) {
                 res += "length:\t" + keyInfo.text.length + " (max " + keyInfo.def.length + ")";
-                if (keyInfo.def.length < computeRecommendedLength(keyInfo.text) ) {
+                if (keyInfo.def.length < computeRecommendedLength(keyInfo.text)) {
                     res += " ⚠️\n";
                 } else {
                     res += "\n";
