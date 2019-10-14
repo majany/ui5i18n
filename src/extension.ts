@@ -3,6 +3,7 @@ import * as i18nProps from "i18nparser";
 import { I18NCompletionItemProvider } from "./I18NCompletionProvider";
 import { I18NHoverProvider } from './I18NHoverProvider';
 import { I18NDiagnosticsProvider } from './I18NDiagnosticsProvider';
+import { I18NCodeActionProvider } from './I18NCodeActionProvider';
 
 export async function activate(context: vscode.ExtensionContext) {
 	let config = vscode.workspace.getConfiguration("ui5i18n");
@@ -20,6 +21,13 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(hoverProviderDisposable);
 
 	const i18nDiagnosticsProvider = new I18NDiagnosticsProvider(i18nFileProperties);
+
+	const i18nCodeActionProvider = new I18NCodeActionProvider(collection, i18nFileProperties);
+	const codeActionProvider = vscode.languages.registerCodeActionsProvider([{
+		language: "properties",
+		scheme: "file",
+		pattern: "**/*.properties"
+	}], i18nCodeActionProvider);
 
 	function addFile(uri: vscode.Uri) {
 		let error = i18nFileProperties.addFile(uri.fsPath);
@@ -71,5 +79,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(createi18nTextCommand);
 	context.subscriptions.push(i18nFileWatcher);
+	context.subscriptions.push(codeActionProvider);
 }
 export function deactivate() { }

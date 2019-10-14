@@ -2,12 +2,23 @@ import * as vscode from 'vscode';
 import { I18NPropertiesFile } from 'i18nparser';
 import { computeRecommendedLength } from "./RecLengthCalculator";
 
-export class I18NDiagnosticsProvider {
-    i18nFileProperties: I18NPropertiesFile;
 
+
+export enum I18NDiagnosticType {
+        "underRecLength",
+        "others"
+}
+
+export class I18NDiagnosticsProvider {
+
+    private i18nFileProperties: I18NPropertiesFile;
 
     constructor(i18nFileProperties: I18NPropertiesFile) {
         this.i18nFileProperties = i18nFileProperties;
+    }
+
+    getI18nFileProperties(){
+        return this.i18nFileProperties;
     }
 
 
@@ -16,6 +27,7 @@ export class I18NDiagnosticsProvider {
         if (!(uri && i18nFilePaths.some(i18nFilePath => i18nFilePath === uri.fsPath))) {
             return [];
         }
+        
         let diagArray: vscode.Diagnostic[] = [];
         this.i18nFileProperties.getKeys().forEach(sKey => {
             let i18nKey = this.i18nFileProperties.get(sKey);
@@ -51,7 +63,7 @@ export class I18NDiagnosticsProvider {
                 if (i18nKey.def.length !== null && i18nKey.def.length < recommendedLength) {
                     let defLine = i18nKey.line - 1;
                     diagArray.push({
-                        code: '',
+                        code: I18NDiagnosticType.underRecLength,
                         message: sKey + " length definition should be at least " + recommendedLength,
                         range: new vscode.Range(new vscode.Position(defLine, 0), new vscode.Position(defLine, 9)),
                         severity: vscode.DiagnosticSeverity.Warning,
