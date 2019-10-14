@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
-// import * as properties from "java-properties";
 import * as i18nProps from "i18nparser";
 import { I18NCompletionItemProvider } from "./I18NCompletionProvider";
-import { computeRecommendedLength } from "./RecLengthCalculator";
 import { I18NHoverProvider } from './I18NHoverProvider';
+import { I18NDiagnosticsProvider } from './I18NDiagnosticsProvider';
 
 export async function activate(context: vscode.ExtensionContext) {
 	let config = vscode.workspace.getConfiguration("ui5i18n");
@@ -19,6 +18,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	const i18nHoverProvider = new I18NHoverProvider(i18nFileProperties);
 	const hoverProviderDisposable = vscode.languages.registerHoverProvider(I18NHoverProvider.DOCUMENT_SELECTOR, i18nHoverProvider);
 	context.subscriptions.push(hoverProviderDisposable);
+
+	const i18nDiagnosticsProvider = new I18NDiagnosticsProvider(i18nFileProperties);
 
 	function addFile(uri: vscode.Uri) {
 		let error = i18nFileProperties.addFile(uri.fsPath);
@@ -37,7 +38,8 @@ export async function activate(context: vscode.ExtensionContext) {
 				source: 'ui5i18n'
 			}]);
 		} else {
-			updateDiagnostics(uri, collection);
+			const fileDiagnostics = i18nDiagnosticsProvider.getDiagnostics(uri);
+			collection.set(uri, fileDiagnostics);
 		}
 	}
 
@@ -49,7 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	}
 	await addFiles();
 
-	// track changes to i18n files (cleare and reread all)
+	// track changes to i18n files (clear and reread changed file)
 	const i18nFileWatcher = vscode.workspace.createFileSystemWatcher("**/i18n.properties"); // config value does not work
 	i18nFileWatcher.onDidChange(uri => {
 		i18nFileProperties.removeFile(uri.fsPath);
@@ -68,104 +70,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		await vscode.commands.executeCommand("vscode.openFolder", i18nFileUri);
 	});
 	context.subscriptions.push(createi18nTextCommand);
-
-	function updateDiagnostics(uri: vscode.Uri, collection: vscode.DiagnosticCollection): void {
-		if (uri && uris.some(uri => uri.fsPath === uri.fsPath)) {
-
-			let diagArray: vscode.Diagnostic[] = [];
-			i18nFileProperties.getKeys().forEach(sKey => {
-				let i18nKey = i18nFileProperties.get(sKey);
-
-				if (i18nKey.fileName !== uri.fsPath) {
-					return;
-				}
-
-				if (i18nKey.duplicateOf) {
-					const original = i18nFileProperties.get(i18nKey.duplicateOf);
-					diagArray.push({
-						code: '',
-						message: i18nKey.duplicateOf + " is already defined",
-						range: new vscode.Range(new vscode.Position(i18nKey.line, 0), new vscode.Position(i18nKey.line, i18nKey.duplicateOf.length)),
-						severity: vscode.DiagnosticSeverity.Error,
-						source: 'ui5i18n',
-						relatedInformation: [
-							new vscode.DiagnosticRelatedInformation(new vscode.Location(
-								uri, new vscode.Range(
-									new vscode.Position(original.line, 0),
-									new vscode.Position(original.line, i18nKey.duplicateOf.length)
-								)
-							),
-								'first definition of ' + i18nKey.duplicateOf)
-						]
-					});
-					return;
-				}
-
-				if (i18nKey.def) {
-					let recommendedLength = computeRecommendedLength(i18nKey.text);
-					if (i18nKey.def.length !== null && i18nKey.def.length < recommendedLength) {
-						let defLine = i18nKey.line - 1;
-						diagArray.push({
-							code: '',
-							message: sKey + " length definition should be at least " + recommendedLength,
-							range: new vscode.Range(new vscode.Position(defLine, 0), new vscode.Position(defLine, 9)),
-							severity: vscode.DiagnosticSeverity.Warning,
-							source: 'ui5i18n'
-						});
-					}
-				} else {
-					let missingDefDiag: vscode.Diagnostic;
-
-					if (i18nKey.defError) {
-						let erroneousDefLine = i18nKey.line - 1;
-						let errorRange = new vscode.Range(new vscode.Position(erroneousDefLine, i18nKey.defError.offset), new vscode.Position(erroneousDefLine, i18nKey.defError.offset + 1));
-						missingDefDiag = {
-							code: '',
-							message: sKey + " has faulty type definition",
-							range: errorRange,
-							severity: vscode.DiagnosticSeverity.Error,
-							source: 'ui5i18n',
-							relatedInformation: [
-								new vscode.DiagnosticRelatedInformation(new vscode.Location(
-									uri, errorRange
-								),
-									i18nKey.defError.message)
-							]
-						};
-					} else {
-						missingDefDiag = {
-							code: '',
-							message: sKey + " is missing type definition",
-							range: new vscode.Range(new vscode.Position(i18nKey.line, 0), new vscode.Position(i18nKey.line, sKey.length)),
-							severity: vscode.DiagnosticSeverity.Error,
-							source: 'ui5i18n'
-						};
-					}
-
-					diagArray.push(missingDefDiag);
-				}
-			});
-
-			//get error lines
-			let errorLines = i18nFileProperties.getErrorLines(uri.fsPath) || [];
-			errorLines.forEach(line => {
-				if (line && line.error) {
-					diagArray.push({
-						code: '',
-						source: 'ui5i18n',
-						severity: vscode.DiagnosticSeverity.Error,
-						message: line.error.message,
-						range: new vscode.Range(new vscode.Position(line.line as number, line.error.offset), new vscode.Position(line.line as number, line.error.offset)),
-					} as vscode.Diagnostic);
-				}
-			});
-
-			collection.set(uri, diagArray);
-		} else {
-			collection.set(uri, []);
-		}
-	}
 	context.subscriptions.push(i18nFileWatcher);
 }
-
 export function deactivate() { }
