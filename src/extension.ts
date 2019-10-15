@@ -10,24 +10,21 @@ export async function activate(context: vscode.ExtensionContext) {
 	const i18nglob = config.get("i18nGlobPattern") as string;
 	const i18nFileProperties = new i18nProps.I18NPropertiesFile();
 	const uris = await vscode.workspace.findFiles(i18nglob);
-	const collection = vscode.languages.createDiagnosticCollection('ui5i18n');
-
+	
 	const i18nCompletionItemProvider = new I18NCompletionItemProvider(i18nFileProperties, uris[0]);
 	const itemProviderDisposable = vscode.languages.registerCompletionItemProvider(I18NCompletionItemProvider.DOCUMENT_SELECTOR, i18nCompletionItemProvider, ...I18NCompletionItemProvider.TRIGGER_CHARS);
 	context.subscriptions.push(itemProviderDisposable);
-
+	
 	const i18nHoverProvider = new I18NHoverProvider(i18nFileProperties);
 	const hoverProviderDisposable = vscode.languages.registerHoverProvider(I18NHoverProvider.DOCUMENT_SELECTOR, i18nHoverProvider);
 	context.subscriptions.push(hoverProviderDisposable);
-
+	
+	const collection = vscode.languages.createDiagnosticCollection('ui5i18n');
 	const i18nDiagnosticsProvider = new I18NDiagnosticsProvider(i18nFileProperties);
 
 	const i18nCodeActionProvider = new I18NCodeActionProvider(collection, i18nFileProperties);
-	const codeActionProvider = vscode.languages.registerCodeActionsProvider([{
-		language: "properties",
-		scheme: "file",
-		pattern: "**/*.properties"
-	}], i18nCodeActionProvider);
+	const codeActionProvider = vscode.languages.registerCodeActionsProvider(I18NCodeActionProvider.DOCUMENT_SELECTOR, i18nCodeActionProvider, I18NCodeActionProvider.METADATA);
+	context.subscriptions.push(codeActionProvider);
 
 	function addFile(uri: vscode.Uri) {
 		let error = i18nFileProperties.addFile(uri.fsPath);
@@ -71,6 +68,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	i18nFileWatcher.onDidDelete(uri => {
 		i18nFileProperties.removeFile(uri.fsPath);
 	});
+	context.subscriptions.push(i18nFileWatcher);
 
 	// for internal use in template completion item
 	let createi18nTextCommand = vscode.commands.registerCommand('ui5i18n.createI18nText', async (i18nFileUri: vscode.Uri, textKey: string) => {
@@ -78,7 +76,5 @@ export async function activate(context: vscode.ExtensionContext) {
 		await vscode.commands.executeCommand("vscode.openFolder", i18nFileUri);
 	});
 	context.subscriptions.push(createi18nTextCommand);
-	context.subscriptions.push(i18nFileWatcher);
-	context.subscriptions.push(codeActionProvider);
 }
 export function deactivate() { }
