@@ -29,6 +29,8 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
         scheme: "file"
     }];
 
+    static WORD_PATTERN = /[A-Za-z0-9>_|.]+/;
+
     private i18nProperties: I18NPropertiesFile;
     private mainI18nFileUri: vscode.Uri;
 
@@ -41,7 +43,7 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
     }
 
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
-        const wordRange = document.getWordRangeAtPosition(position, /[A-Za-z0-9>_|.]+/);
+        const wordRange = document.getWordRangeAtPosition(position, I18NCompletionItemProvider.WORD_PATTERN);
         const wordRangeWithColon = document.getWordRangeAtPosition(position, /[A-Za-z0-9>_|."']+/);
         const wordText = document.getText(wordRange);
         const wordTextWithColon = document.getText(wordRangeWithColon);

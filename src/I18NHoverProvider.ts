@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { HoverProvider } from "vscode";
 import { I18NPropertiesFile, I18nValue } from 'i18nparser';
-import { isDate } from 'util';
 
 export class I18NHoverProvider implements HoverProvider {
 

@@ -4,13 +4,14 @@ import { I18NCompletionItemProvider } from "./I18NCompletionProvider";
 import { I18NHoverProvider } from './I18NHoverProvider';
 import { I18NDiagnosticsProvider } from './I18NDiagnosticsProvider';
 import { I18NCodeActionProvider } from './I18NCodeActionProvider';
+import { I18NDefinitionProvider } from "./I18NDefinitionProvider";
 
 export async function activate(context: vscode.ExtensionContext) {
 	let config = vscode.workspace.getConfiguration("ui5i18n");
 	const i18nglob = config.get("i18nGlobPattern") as string;
 	const i18nFileProperties = new i18nProps.I18NPropertiesFile();
 	const uris = await vscode.workspace.findFiles(i18nglob);
-	
+
 	const i18nCompletionItemProvider = new I18NCompletionItemProvider(i18nFileProperties, uris[0]);
 	const itemProviderDisposable = vscode.languages.registerCompletionItemProvider(I18NCompletionItemProvider.DOCUMENT_SELECTOR, i18nCompletionItemProvider, ...I18NCompletionItemProvider.TRIGGER_CHARS);
 	context.subscriptions.push(itemProviderDisposable);
@@ -25,6 +26,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	const i18nCodeActionProvider = new I18NCodeActionProvider(collection, i18nFileProperties);
 	const codeActionProvider = vscode.languages.registerCodeActionsProvider(I18NCodeActionProvider.DOCUMENT_SELECTOR, i18nCodeActionProvider, I18NCodeActionProvider.METADATA);
 	context.subscriptions.push(codeActionProvider);
+
+	const i18NDefinitionProvider = new I18NDefinitionProvider(i18nFileProperties);
+	const definitionProvider = vscode.languages.registerDefinitionProvider(I18NDefinitionProvider.DOCUMENT_SELECTOR, i18NDefinitionProvider);
+	context.subscriptions.push(definitionProvider);
 
 	function addFile(uri: vscode.Uri) {
 		let error = i18nFileProperties.addFile(uri.fsPath);
