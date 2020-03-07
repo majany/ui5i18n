@@ -31,6 +31,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	const definitionProvider = vscode.languages.registerDefinitionProvider(I18NDefinitionProvider.DOCUMENT_SELECTOR, i18NDefinitionProvider);
 	context.subscriptions.push(definitionProvider);
 
+	// TODO: add diagnostics for missing i18n properties + add completion item provider in json files
+
 	function addFile(uri: vscode.Uri) {
 		let error = i18nFileProperties.addFile(uri.fsPath);
 		if (error) {
