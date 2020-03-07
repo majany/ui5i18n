@@ -27,6 +27,10 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
         language: "javascript",
         pattern: "**/*.js",
         scheme: "file"
+    },{
+        language: "json",
+        pattern: "**/*.json",
+        scheme: "file"
     }];
 
     static WORD_PATTERN = /[A-Za-z0-9>_|.]+/;

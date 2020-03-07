@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { I18NPropertiesFile } from 'i18nparser';
-import { I18NCompletionItemProvider } from './I18NCompletionProvider';
 
 
 export class I18NDefinitionProvider implements vscode.DefinitionProvider {
@@ -13,7 +12,13 @@ export class I18NDefinitionProvider implements vscode.DefinitionProvider {
         language: "javascript",
         pattern: "**/*.js",
         scheme: "file"
+    },{
+        language: "json",
+        pattern: "**/*.json",
+        scheme: "file"
     }];
+
+    static JSON_WORD_PATTERN = /[A-Za-z0-9_|.]+/;
 
     private i18nProperties: I18NPropertiesFile;
 
@@ -22,7 +27,12 @@ export class I18NDefinitionProvider implements vscode.DefinitionProvider {
     }
 
     provideDefinition(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Location | vscode.Location[] | vscode.LocationLink[]> {
-        const wordRange = document.getWordRangeAtPosition(position, I18NCompletionItemProvider.WORD_PATTERN);
+        let wordRange;
+        if(document.languageId === "json"){
+            wordRange = document.getWordRangeAtPosition(position, I18NDefinitionProvider.JSON_WORD_PATTERN);
+        } else {
+            wordRange = document.getWordRangeAtPosition(position);
+        }
         const key = document.getText(wordRange);
 
         const i18nParsedKey = this.i18nProperties.get(key);

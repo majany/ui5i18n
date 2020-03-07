@@ -13,7 +13,13 @@ export class I18NHoverProvider implements HoverProvider {
         language: "javascript",
         pattern: "**/*.js",
         scheme: "file"
+    }, {
+        language: "json",
+        pattern: "**/*.json",
+        scheme: "file"
     }];
+
+    static JSON_WORD_PATTERN = /[A-Za-z0-9_|.]+/;
 
     i18nProperites: I18NPropertiesFile;
 
@@ -22,7 +28,12 @@ export class I18NHoverProvider implements HoverProvider {
     }
 
     provideHover(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
-        const wordRange = document.getWordRangeAtPosition(position);
+        let wordRange;
+        if(document.languageId === "json"){
+            wordRange = document.getWordRangeAtPosition(position, I18NHoverProvider.JSON_WORD_PATTERN);
+        } else {
+            wordRange = document.getWordRangeAtPosition(position);
+        }
         const hoveredWord = document.getText(wordRange);
 
         const i18nProperty = this.i18nProperites.get(hoveredWord);
