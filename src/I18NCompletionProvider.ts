@@ -60,16 +60,18 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
         const isWithTriggerPrefix = wordText.startsWith(this.TRIGGER_PREFIX);
         const isWithTriggerPrefixNoChev = wordText.startsWith(this.TRIGGER_PREFIX_NO_CHEV);
         const isTextInDoubleCurly = this.isTextInDoubleCurly(document, position);
+        const isJSONFile = document.languageId === "json";
 
-        if (wordRange && (isTextInDoubleCurly || isWithTriggerPrefix || isWithTriggerPrefixNoChev || (wasInvoked && isInColons && isJavascriptFile))) {
+        if ((isTextInDoubleCurly && isJSONFile) || (wordRange && (isWithTriggerPrefix || isWithTriggerPrefixNoChev || (wasInvoked && isInColons && isJavascriptFile)))) {
             // show existing i18n properties
             let showItemWithTriggerPrefix = !isTextInDoubleCurly && (isInColons && !isWithTriggerPrefixNoChev || isWithTriggerPrefix);
-            i18nCompletionItems = this.getCompletionItems(wordText, wasInvoked, isJavascriptFile, showItemWithTriggerPrefix, position, document);
+            let emptyRange = new vscode.Range(position,position);
+            i18nCompletionItems = this.getCompletionItems(wordText, wasInvoked && !!wordRange, isJavascriptFile, showItemWithTriggerPrefix, isJSONFile ? (wordRange || emptyRange) : undefined);
         }
         return i18nCompletionItems;
     }
 
-    private getCompletionItems(wordText: string, showI18nCreateSnippet: boolean, useKeyAsInsertText: boolean, showItemWithTriggerPrefix: boolean, position: vscode.Position, document: vscode.TextDocument): CompletionItem[] {
+    private getCompletionItems(wordText: string, showI18nCreateSnippet: boolean, useKeyAsInsertText: boolean, showItemWithTriggerPrefix: boolean, completionRange?: vscode.Range): CompletionItem[] {
         const i18nCompletionItems: CompletionItem[] = [];
 
         const getCompletionItemLabel = (key: string) => { return (showItemWithTriggerPrefix ? (this.TRIGGER_PREFIX + key) : key); };
@@ -85,14 +87,10 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
             const completionItem = new CompletionItem(completionItemLabel, vscode.CompletionItemKind.Field);
             completionItem.detail = keyInfo.text;
             completionItem.documentation = this.formatCompletionItemDocumentation(keyInfo);
-            // check if input text exists
-            // completionItem.filterText = "\"{{" + completionItem.label;
 
-            const start = document.getWordRangeAtPosition(position, I18NCompletionItemProvider.WORD_PATTERN);
-            // if(start){
-            //     completionItem.range = new vscode.Range(start.start, position);
-            // }
-
+            if(completionRange){
+                completionItem.range = completionRange;
+            }
 
             if (useKeyAsInsertText) {
                 completionItem.insertText = key;
