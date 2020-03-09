@@ -27,13 +27,15 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
         language: "javascript",
         pattern: "**/*.js",
         scheme: "file"
-    },{
+    }, {
         language: "json",
         pattern: "**/*.json",
         scheme: "file"
     }];
 
     static WORD_PATTERN = /[A-Za-z0-9>_|.]+/;
+    static WOR_PATTERN_WITH_COLONS = /[A-Za-z0-9>_|."']+/;
+    static WORD_PATTERN_WITHIN_CURLY = /{{\s*[A-Za-z0-9_|.]*\s*}}/;
 
     private i18nProperties: I18NPropertiesFile;
     private mainI18nFileUri: vscode.Uri;
@@ -47,27 +49,31 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
     }
 
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
-        const wordRange = document.getWordRangeAtPosition(position, I18NCompletionItemProvider.WORD_PATTERN);
-        const wordRangeWithColon = document.getWordRangeAtPosition(position, /[A-Za-z0-9>_|."']+/);
-        const wordText = document.getText(wordRange);
-        const wordTextWithColon = document.getText(wordRangeWithColon);
-        const isInColons = (wordTextWithColon.startsWith("\"") && wordTextWithColon.endsWith("\"")) || wordTextWithColon.startsWith("'") && wordTextWithColon.endsWith("'");
         let i18nCompletionItems: CompletionItem[] = [];
-        const isJavascriptFile = document.languageId === "javascript";
 
+        const wordRange = document.getWordRangeAtPosition(position, I18NCompletionItemProvider.WORD_PATTERN);
+        const wordText = document.getText(wordRange);
+
+        const isJavascriptFile = document.languageId === "javascript";
         const wasInvoked = context.triggerKind === vscode.CompletionTriggerKind.Invoke;
-        if (wordRange && (wordText.startsWith(this.TRIGGER_PREFIX) || wordText.startsWith(this.TRIGGER_PREFIX_NO_CHEV) || (wasInvoked && isInColons && isJavascriptFile))) {
+        const isInColons = this.isTextInColons(document, position);
+        const isWithTriggerPrefix = wordText.startsWith(this.TRIGGER_PREFIX);
+        const isWithTriggerPrefixNoChev = wordText.startsWith(this.TRIGGER_PREFIX_NO_CHEV);
+        const isTextInDoubleCurly = this.isTextInDoubleCurly(document, position);
+
+        if (wordRange && (isTextInDoubleCurly || isWithTriggerPrefix || isWithTriggerPrefixNoChev || (wasInvoked && isInColons && isJavascriptFile))) {
             // show existing i18n properties
-            i18nCompletionItems = this.getCompletionItems(wordText, wasInvoked, isJavascriptFile, isInColons);
+            let showItemWithTriggerPrefix = !isTextInDoubleCurly && (isInColons && !isWithTriggerPrefixNoChev || isWithTriggerPrefix);
+            i18nCompletionItems = this.getCompletionItems(wordText, wasInvoked, isJavascriptFile, showItemWithTriggerPrefix, position, document);
         }
         return i18nCompletionItems;
     }
 
-    private getCompletionItems(wordText: string, wasInvoked: boolean, isJavascriptFile: boolean, isInColons: boolean): CompletionItem[] {
+    private getCompletionItems(wordText: string, showI18nCreateSnippet: boolean, useKeyAsInsertText: boolean, showItemWithTriggerPrefix: boolean, position: vscode.Position, document: vscode.TextDocument): CompletionItem[] {
         const i18nCompletionItems: CompletionItem[] = [];
-        const withTriggerPrefix = wordText.startsWith(this.TRIGGER_PREFIX);
-        const withTriggerPrefixNoChev = wordText.startsWith(this.TRIGGER_PREFIX_NO_CHEV);
-        
+
+        const getCompletionItemLabel = (key: string) => { return (showItemWithTriggerPrefix ? (this.TRIGGER_PREFIX + key) : key); };
+
         this.i18nProperties.getKeys().forEach((key: string) => {
             const keyInfo = this.i18nProperties.get(key);
             if (keyInfo.duplicateOf) {
@@ -75,30 +81,37 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
                 return;
             }
 
-            let completionItemLabel = (isInColons && !withTriggerPrefixNoChev || withTriggerPrefix) ? key : (this.TRIGGER_PREFIX + key);
+            let completionItemLabel = getCompletionItemLabel(key);
             const completionItem = new CompletionItem(completionItemLabel, vscode.CompletionItemKind.Field);
             completionItem.detail = keyInfo.text;
             completionItem.documentation = this.formatCompletionItemDocumentation(keyInfo);
             // check if input text exists
-            
-            if (isJavascriptFile) {
+            // completionItem.filterText = "\"{{" + completionItem.label;
+
+            const start = document.getWordRangeAtPosition(position, I18NCompletionItemProvider.WORD_PATTERN);
+            // if(start){
+            //     completionItem.range = new vscode.Range(start.start, position);
+            // }
+
+
+            if (useKeyAsInsertText) {
                 completionItem.insertText = key;
             }
             i18nCompletionItems.push(completionItem);
         });
-        
-        const wordTextWithoutPrefix = withTriggerPrefix ? wordText.slice(this.TRIGGER_PREFIX.length) : wordText;
+
+        const wordTextWithoutPrefix = wordText.startsWith(this.TRIGGER_PREFIX) ? wordText.slice(this.TRIGGER_PREFIX.length) : wordText;
         const textExists = !!this.i18nProperties.get(wordTextWithoutPrefix);
 
         // input text is not an existing i18n property --> show template completion item
-        if (!textExists && wasInvoked && wordTextWithoutPrefix.length > 2 && wordTextWithoutPrefix !== "i18n") {
+        if (!textExists && showI18nCreateSnippet && wordTextWithoutPrefix.length > 2 && wordTextWithoutPrefix !== "i18n") {
             const placeholder = this.createPlaceHolderCompletionItem(wordTextWithoutPrefix);
             i18nCompletionItems.push(placeholder);
         }
         return i18nCompletionItems;
     }
 
-    private createPlaceHolderCompletionItem(newPropertyName: string) : CompletionItem{
+    private createPlaceHolderCompletionItem(newPropertyName: string): CompletionItem {
         let placeholder = new CompletionItem(newPropertyName, vscode.CompletionItemKind.Snippet);
         placeholder.detail = "Create i18n property";
         placeholder.documentation = "Opens the main i18n.properties file and copies the name into the clipboard";
@@ -132,6 +145,18 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
         }
 
         return res;
+    }
+
+    private isTextInColons(document: vscode.TextDocument, position: vscode.Position) {
+        const wordRangeWithColon = document.getWordRangeAtPosition(position, I18NCompletionItemProvider.WOR_PATTERN_WITH_COLONS);
+        const wordTextWithColon = document.getText(wordRangeWithColon);
+        const rBeginsOrEndsWithColon = /^['"].*['"]$/;
+        return rBeginsOrEndsWithColon.test(wordTextWithColon);
+    }
+
+    private isTextInDoubleCurly(document: vscode.TextDocument, position: vscode.Position) {
+        const wordRangeWithinCurly = document.getWordRangeAtPosition(position, I18NCompletionItemProvider.WORD_PATTERN_WITHIN_CURLY);
+        return wordRangeWithinCurly && !!document.getText(wordRangeWithinCurly);
     }
 
 }
