@@ -34,6 +34,7 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
     }];
 
     static WORD_PATTERN = /[A-Za-z0-9>_|.]+/;
+    static WORD_PATTERN_NO_CHEV = /[A-Za-z0-9_|.]+/;
     static WOR_PATTERN_WITH_COLONS = /[A-Za-z0-9>_|."']+/;
     static WORD_PATTERN_WITHIN_CURLY = /{{\s*[A-Za-z0-9_|.]*\s*}}/;
 
@@ -54,6 +55,8 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
         const wordRange = document.getWordRangeAtPosition(position, I18NCompletionItemProvider.WORD_PATTERN);
         const wordText = document.getText(wordRange);
 
+        const wordRangeNoChev = document.getWordRangeAtPosition(position, I18NCompletionItemProvider.WORD_PATTERN_NO_CHEV);
+
         const isJavascriptFile = document.languageId === "javascript";
         const wasInvoked = context.triggerKind === vscode.CompletionTriggerKind.Invoke;
         const isInColons = this.isTextInColons(document, position);
@@ -64,9 +67,9 @@ export class I18NCompletionItemProvider implements CompletionItemProvider {
 
         if ((isTextInDoubleCurly && isJSONFile) || (wordRange && (isWithTriggerPrefix || isWithTriggerPrefixNoChev || (wasInvoked && isInColons && isJavascriptFile)))) {
             // show existing i18n properties
-            let showItemWithTriggerPrefix = !isTextInDoubleCurly && (isInColons && !isWithTriggerPrefixNoChev || isWithTriggerPrefix);
+            let showItemWithTriggerPrefix = !isTextInDoubleCurly && !(isInColons && !isWithTriggerPrefixNoChev || isWithTriggerPrefix);
             let emptyRange = new vscode.Range(position,position);
-            i18nCompletionItems = this.getCompletionItems(wordText, wasInvoked && !!wordRange, isJavascriptFile, showItemWithTriggerPrefix, isJSONFile ? (wordRange || emptyRange) : undefined);
+            i18nCompletionItems = this.getCompletionItems(wordText, wasInvoked && !!wordRange, isJavascriptFile, showItemWithTriggerPrefix, isJSONFile ? (wordRangeNoChev || emptyRange) : undefined);
         }
         return i18nCompletionItems;
     }
