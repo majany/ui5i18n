@@ -64,7 +64,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	await addFiles();
 
 	// track changes to i18n files (clear and reread changed file)
-	const i18nFileWatcher = vscode.workspace.createFileSystemWatcher("**/i18n.properties"); // config value does not work
+	const i18nFileWatcher = vscode.workspace.createFileSystemWatcher(!i18nglob.startsWith("**/") ? ("**/" + i18nglob) : i18nglob); // config value does not work
 	i18nFileWatcher.onDidChange(uri => {
 		i18nFileProperties.removeFile(uri.fsPath);
 		addFile(uri);
