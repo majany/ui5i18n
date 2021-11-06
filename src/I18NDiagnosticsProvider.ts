@@ -18,7 +18,7 @@ export class I18NDiagnosticsProvider {
 
     private i18nFileProperties: I18NPropertiesFile;
 
-    private singleQuoteNotEscaped : RegExp = /[^']'[^']/;
+    public static singleQuoteNotEscaped : RegExp = /[^']'[^']/;
     private containsVariable : RegExp = /[^\\]{\d*}/;   
 
     constructor(i18nFileProperties: I18NPropertiesFile) {
@@ -59,8 +59,8 @@ export class I18NDiagnosticsProvider {
                 diagArray.push(this.createMissingDefError(i18nValue, sKey, uri));
             }
 
-            if(this.singleQuoteNotEscaped.test(i18nValue.text) && this.containsVariable.test(i18nValue.text)){
-                const singleQuoteOffsetInText = this.singleQuoteNotEscaped.exec(i18nValue.text)?.index ?? 0;
+            if(I18NDiagnosticsProvider.singleQuoteNotEscaped.test(i18nValue.text) && this.containsVariable.test(i18nValue.text)){
+                const singleQuoteOffsetInText = I18NDiagnosticsProvider.singleQuoteNotEscaped.exec(i18nValue.text)?.index ?? 0;
                 const singleQuoteOffsetInLine = sKey.length + 2 + singleQuoteOffsetInText;
                 diagArray.push({
                     message: sKey + " has a variables but does not escape single quotes",
